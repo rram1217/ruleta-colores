@@ -5,6 +5,24 @@ import {
     doc, onSnapshot, runTransaction, setDoc, serverTimestamp
 } from 'firebase/firestore';
 
+/** Mapa de colores reutilizable para toda la UI */
+const COLOR_MAP = {
+    'Rojo': '#dc2626', 'Azul': '#2563eb', 'Verde': '#16a34a',
+    'Amarillo': '#eab308', 'Naranja': '#ea580c', 'Morado': '#9333ea',
+    'Blanco/Morado': '#9333ea', // 👈 este es el que nos importa
+    'Rosa': '#ec4899', 'Violeta': '#7c3aed', 'Cyan': '#0891b2',
+    'Negro': '#1f2937', 'Blanco': '#FFFFFF', 'Gris': '#6b7280',
+    'Celeste': '#0ea5e9', 'Turquesa': '#14b8a6', 'Lima': '#84cc16',
+    'Dorado': '#f59e0b', 'Plateado': '#9ca3af', 'Marrón': '#92400e',
+    'Café': '#78350f', 'Beige': '#d6d3d1', 'Coral': '#f97316',
+    'Magenta': '#d946ef', 'Índigo': '#4f46e5', 'Lavanda': '#a78bfa',
+    'Rojo Oscuro': '#991b1b', 'Azul Claro': '#60a5fa', 'Verde Claro': '#4ade80',
+    'Amarillo Claro': '#fde047', 'Rosa Claro': '#f9a8d4', 'Morado Claro': '#c084fc',
+    'Verde Oscuro': '#15803d', 'Azul Oscuro': '#1e40af', 'Naranja Claro': '#fb923c',
+    'Esmeralda': '#10b981', 'Rubí': '#be123c', 'Zafiro': '#1e40af',
+    'Ámbar': '#f59e0b', 'Jade': '#059669', 'Carmesí': '#dc2626'
+};
+
 const ColorWheel = () => {
     const [colors, setColors] = useState(['Rojo', 'Azul', 'Verde', 'Amarillo', 'Naranja', 'Blanco/Morado', 'Negro', 'Rosa']);
     const [newColor, setNewColor] = useState('');
@@ -13,21 +31,21 @@ const ColorWheel = () => {
     const [selectedColor, setSelectedColor] = useState('');
     const [history, setHistory] = useState([]);
     const [rotation, setRotation] = useState(0);
-    const [playerName, setPlayerName] = useState(''); // 👈 nombre del jugador
+    const [playerName, setPlayerName] = useState('');
+    const [flash, setFlash] = useState(null); // { color, ts, duration }
     const wheelRef = useRef(null);
 
-    // Calibración opcional del puntero (0° = arriba). Cambia si ves leve desajuste visual.
+    // 0° = arriba. Ajusta ±1..3° si notas micro-desfase visual
     const POINTER_ZERO_DEG = 0;
 
-    // Modo admin / invitado y sala
+    // Modo / sala
     const params = new URLSearchParams(window.location.search);
     const isPublicMode = params.get('mode') === 'public';
     const isAdmin = !isPublicMode;
-    const roomId = params.get('room') || 'default'; // usa 'default' si no envían room
-
+    const roomId = params.get('room') || 'default';
     const roomRef = doc(db, 'rooms', roomId);
 
-    // Cargar/guardar nombre localmente
+    // Nombre persistido
     useEffect(() => {
         const saved = localStorage.getItem('wheelPlayerName') || '';
         setPlayerName(saved);
@@ -36,19 +54,13 @@ const ColorWheel = () => {
         localStorage.setItem('wheelPlayerName', playerName || '');
     }, [playerName]);
 
-    // Suscripción en tiempo real al documento de la sala
+    // Suscripción Firestore
     useEffect(() => {
-        // Si el doc no existe aún, el admin lo inicializa
         const initIfNeeded = async () => {
             if (!isAdmin) return;
             await setDoc(
                 roomRef,
-                {
-                    colors,
-                    customColors,
-                    history: [],
-                    updatedAt: serverTimestamp()
-                },
+                { colors, customColors, history: [], updatedAt: serverTimestamp() },
                 { merge: true }
             );
         };
@@ -59,25 +71,25 @@ const ColorWheel = () => {
                 setColors(d.colors || []);
                 setCustomColors(d.customColors || {});
                 setHistory(d.history || []);
+                setFlash(d.flash || null);
             } else {
-                // Si el doc no existe y somos admin, lo creamos
                 initIfNeeded();
             }
         });
-
         return () => unsub();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [roomId, isAdmin]);
 
-    // Helper de escritura atómica
+    // Helper transaccional
     const txUpdate = (updateFn) =>
         runTransaction(db, async (tx) => {
             const s = await tx.get(roomRef);
-            const d = s.exists() ? s.data() : { colors: [], history: [], customColors: {} };
+            const d = s.exists() ? s.data() : { colors: [], history: [], customColors: {}, flash: null };
             const next = updateFn({
                 colors: d.colors || [],
                 history: d.history || [],
-                customColors: d.customColors || {}
+                customColors: d.customColors || {},
+                flash: d.flash || null,
             });
             tx.set(roomRef, { ...next, updatedAt: serverTimestamp() }, { merge: true });
         });
@@ -86,9 +98,9 @@ const ColorWheel = () => {
         if (!isAdmin) return;
         const c = newColor.trim();
         if (!c) return;
-        await txUpdate(({ colors, history, customColors }) => {
-            if (colors.includes(c)) return { colors, history, customColors };
-            return { colors: [...colors, c], history, customColors };
+        await txUpdate(({ colors, history, customColors, flash }) => {
+            if (colors.includes(c)) return { colors, history, customColors, flash };
+            return { colors: [...colors, c], history, customColors, flash };
         });
         setNewColor('');
     };
@@ -99,97 +111,97 @@ const ColorWheel = () => {
             const nextColors = colors.filter(c => c !== colorToRemove);
             const nextCustom = { ...customColors };
             delete nextCustom[colorToRemove];
-            return { colors: nextColors, history, customColors: nextCustom };
+            return { colors: nextColors, history, customColors: nextCustom, flash: null };
         });
     };
 
     const updateCustomColor = async (colorName, hexColor) => {
         if (!isAdmin) return;
-        await txUpdate(({ colors, history, customColors }) => ({
+        await txUpdate(({ colors, history, customColors, flash }) => ({
             colors,
             history,
+            flash,
             customColors: { ...customColors, [colorName]: hexColor }
         }));
     };
 
-    // ==============================
-    // GIRO ALINEADO (puntero y resultado coinciden)
-    // ==============================
+    // Giro: aleatorio + ganador por redondeo al centro
     const spinWheel = () => {
-        // Validar nombre antes de girar
         const who = (playerName || '').trim();
-        if (!who) {
-            alert('Por favor, escribe tu nombre antes de girar.');
-            return;
-        }
-
+        if (!who) { alert('Por favor, escribe tu nombre antes de girar.'); return; }
         if (colors.length === 0 || isSpinning) return;
 
         setIsSpinning(true);
         setSelectedColor('');
 
-        const seg = 360 / colors.length;
-        const base = ((rotation % 360) + 360) % 360; // rotación actual normalizada
-
-        // Elegimos un índice objetivo al azar y alineamos el giro para que quede centrado bajo la flecha
-        const targetIndex = Math.floor(Math.random() * colors.length);
-        const targetAngle = targetIndex * seg + seg / 2;
-
-        // delta para que el centro del segmento quede exactamente bajo el puntero
         const spins = 5 + Math.random() * 5;
-        const alignDelta = (POINTER_ZERO_DEG - targetAngle - base + 360) % 360;
-        const finalRotation = rotation + spins * 360 + alignDelta;
-
+        const finalRotation = rotation + spins * 360 + Math.random() * 360;
         setRotation(finalRotation);
 
-        setTimeout(async () => {
-            const selected = colors[targetIndex];
+        const BLINK_DURATION = 1200;
+        const REMOVE_DELAY = BLINK_DURATION + 100;
 
-            // Transacción: quita el color y agrega al historial con el jugador
+        setTimeout(async () => {
+            const n = colors.length;
+            if (n === 0) { setIsSpinning(false); return; }
+            const seg = 360 / n;
+
+            const norm = ((finalRotation % 360) + 360) % 360;
+            const angleAtPointer = ((POINTER_ZERO_DEG - norm) % 360 + 360) % 360;
+
+            let selectedIndex = Math.round(angleAtPointer / seg) % n;
+            if (selectedIndex < 0) selectedIndex += n;
+
+            const selected = colors[selectedIndex];
+            const now = Date.now();
+
+            // 1) historia + flash (parpadeo)
             await txUpdate(({ colors: curr, history, customColors }) => {
-                if (!curr.includes(selected)) return { colors: curr, history, customColors }; // ya lo quitó otro
-                const nextColors = curr.length === 1 ? curr : curr.filter(c => c !== selected);
-                const nextHistory = [...(history || []), { color: selected, ts: Date.now(), by: who }];
-                return { colors: nextColors, history: nextHistory, customColors };
+                if (!curr.includes(selected)) {
+                    return { colors: curr, history, customColors, flash: null };
+                }
+                const nextHistory = [...(history || []), { color: selected, ts: now, by: who }];
+                return {
+                    colors: curr,
+                    history: nextHistory,
+                    customColors,
+                    flash: { color: selected, ts: now, duration: BLINK_DURATION }
+                };
             });
 
             setSelectedColor(selected);
             setIsSpinning(false);
-        }, 3000); // misma duración que la transición CSS
+
+            // 2) quitar color luego de parpadear
+            setTimeout(async () => {
+                await txUpdate(({ colors: curr, history, customColors, flash }) => {
+                    const sameFlash = flash && flash.color === selected;
+                    const nextColors = curr.length === 1 ? curr : curr.filter(c => c !== selected);
+                    return {
+                        colors: nextColors,
+                        history,
+                        customColors,
+                        flash: sameFlash ? null : flash
+                    };
+                });
+            }, REMOVE_DELAY);
+        }, 3000);
     };
 
-    // ==============================
-    // CÍRCULO COMPLETO CON 1 COLOR
-    // ==============================
+    // Dibujo de la ruleta — offset -seg/2 y caso 1 color = círculo
     const getWheelSegments = () => {
-        // Caso especial: 1 color => dibujar un círculo completo
         if (colors.length === 1) {
             const color = colors[0];
-
-            const colorMap = {
-                'Rojo': '#dc2626', 'Azul': '#2563eb', 'Verde': '#16a34a',
-                'Amarillo': '#eab308', 'Naranja': '#ea580c', 'Morado': '#9333ea', 'Blanco/Morado': '#9333ea',
-                'Rosa': '#ec4899', 'Violeta': '#7c3aed', 'Cyan': '#0891b2',
-                'Negro': '#1f2937', 'Blanco': '#FFFFFF', 'Gris': '#6b7280',
-                'Celeste': '#0ea5e9', 'Turquesa': '#14b8a6', 'Lima': '#84cc16',
-                'Dorado': '#f59e0b', 'Plateado': '#9ca3af', 'Marrón': '#92400e',
-                'Café': '#78350f', 'Beige': '#d6d3d1', 'Coral': '#f97316',
-                'Magenta': '#d946ef', 'Índigo': '#4f46e5', 'Lavanda': '#a78bfa',
-                'Rojo Oscuro': '#991b1b', 'Azul Claro': '#60a5fa', 'Verde Claro': '#4ade80',
-                'Amarillo Claro': '#fde047', 'Rosa Claro': '#f9a8d4', 'Morado Claro': '#c084fc',
-                'Verde Oscuro': '#15803d', 'Azul Oscuro': '#1e40af', 'Naranja Claro': '#fb923c',
-                'Esmeralda': '#10b981', 'Rubí': '#be123c', 'Zafiro': '#1e40af',
-                'Ámbar': '#f59e0b', 'Jade': '#059669', 'Carmesí': '#dc2626'
-            };
-
-            const segmentColor =
-                customColors[color] ||
-                colorMap[color] ||
-                `hsl(0, 70%, 50%)`;
+            const segmentColor = customColors[color] || COLOR_MAP[color] || `hsl(0, 70%, 50%)`;
+            const isBlinking = flash && flash.color === color;
 
             return (
                 <g key={color}>
-                    <circle cx="150" cy="150" r="140" fill={segmentColor} stroke="#fff" strokeWidth="3" />
+                    <circle
+                        cx="150" cy="150" r="140"
+                        className={isBlinking ? 'blink-twice' : ''}
+                        fill={segmentColor} stroke="#fff" strokeWidth="3"
+                    />
                     <text
                         x="150" y="150"
                         textAnchor="middle" dominantBaseline="middle"
@@ -202,12 +214,12 @@ const ColorWheel = () => {
             );
         }
 
-        // Caso normal: 2+ colores => segmentos
         const segmentAngle = 360 / Math.max(colors.length, 1);
+        const drawOffset = -segmentAngle / 2;
 
         return colors.map((color, index) => {
-            const startAngle = index * segmentAngle;
-            const endAngle = (index + 1) * segmentAngle;
+            const startAngle = index * segmentAngle + drawOffset;
+            const endAngle = (index + 1) * segmentAngle + drawOffset;
             const largeArcFlag = segmentAngle > 180 ? 1 : 0;
 
             const x1 = 150 + 140 * Math.cos((startAngle - 90) * Math.PI / 180);
@@ -222,33 +234,27 @@ const ColorWheel = () => {
                 'Z'
             ].join(' ');
 
-            const colorMap = {
-                'Rojo': '#dc2626', 'Azul': '#2563eb', 'Verde': '#16a34a',
-                'Amarillo': '#eab308', 'Naranja': '#ea580c', 'Morado': '#9333ea', 'Blanco/Morado': '#9333ea',
-                'Rosa': '#ec4899', 'Violeta': '#7c3aed', 'Cyan': '#0891b2',
-                'Negro': '#1f2937', 'Blanco': '#FFFFFF', 'Gris': '#6b7280',
-                'Celeste': '#0ea5e9', 'Turquesa': '#14b8a6', 'Lima': '#84cc16',
-                'Dorado': '#f59e0b', 'Plateado': '#9ca3af', 'Marrón': '#92400e',
-                'Café': '#78350f', 'Beige': '#d6d3d1', 'Coral': '#f97316',
-                'Magenta': '#d946ef', 'Índigo': '#4f46e5', 'Lavanda': '#a78bfa',
-                'Rojo Oscuro': '#991b1b', 'Azul Claro': '#60a5fa', 'Verde Claro': '#4ade80',
-                'Amarillo Claro': '#fde047', 'Rosa Claro': '#f9a8d4', 'Morado Claro': '#c084fc',
-                'Verde Oscuro': '#15803d', 'Azul Oscuro': '#1e40af', 'Naranja Claro': '#fb923c',
-                'Esmeralda': '#10b981', 'Rubí': '#be123c', 'Zafiro': '#1e40af',
-                'Ámbar': '#f59e0b', 'Jade': '#059669', 'Carmesí': '#dc2626'
-            };
+            const labelAngle = startAngle + segmentAngle / 2;
 
             const segmentColor =
                 customColors[color] ||
-                colorMap[color] ||
+                COLOR_MAP[color] ||
                 `hsl(${index * 360 / Math.max(colors.length, 1)}, 70%, 50%)`;
+
+            const isBlinking = flash && flash.color === color;
 
             return (
                 <g key={color}>
-                    <path d={pathData} fill={segmentColor} stroke="#fff" strokeWidth="3" />
+                    <path
+                        d={pathData}
+                        className={isBlinking ? 'blink-twice' : ''}
+                        fill={segmentColor}
+                        stroke="#fff"
+                        strokeWidth="3"
+                    />
                     <text
-                        x={150 + 80 * Math.cos((startAngle + segmentAngle / 2 - 90) * Math.PI / 180)}
-                        y={150 + 80 * Math.sin((startAngle + segmentAngle / 2 - 90) * Math.PI / 180)}
+                        x={150 + 80 * Math.cos((labelAngle - 90) * Math.PI / 180)}
+                        y={150 + 80 * Math.sin((labelAngle - 90) * Math.PI / 180)}
                         textAnchor="middle"
                         dominantBaseline="middle"
                         fill="white"
@@ -267,10 +273,8 @@ const ColorWheel = () => {
         if (!isAdmin) return;
         await txUpdate(({ colors, history, customColors }) => {
             const all = [...new Set([...colors, ...history.map(h => h.color)])];
-            return { colors: all, history: [], customColors };
+            return { colors: all, history: [], customColors, flash: null };
         });
-        setSelectedColor('');
-        setRotation(0);
     };
 
     const sharePublicLink = () => {
@@ -287,11 +291,23 @@ const ColorWheel = () => {
         alert('¡Link admin copiado! ' + url);
     };
 
-    // Puede girar si: hay colores, no está girando y hay nombre
     const canSpin = colors.length > 0 && !isSpinning && (playerName || '').trim().length > 0;
 
     return (
         <div className="max-w-4xl mx-auto p-6 bg-gradient-to-br from-purple-50 to-blue-50 min-h-screen">
+            {/* estilos parpadeo */}
+            <style>{`
+        @keyframes blinkTwice {
+          0%   { opacity: 1; transform: scale(1); }
+          20%  { opacity: 0.4; transform: scale(1.02); }
+          40%  { opacity: 1; transform: scale(1); }
+          60%  { opacity: 0.4; transform: scale(1.02); }
+          80%  { opacity: 1; transform: scale(1); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+        .blink-twice { animation: blinkTwice 1.2s ease-in-out; }
+      `}</style>
+
             <div className="bg-white rounded-lg shadow-xl p-6">
                 <div className="text-center mb-6">
                     <h1 className="text-3xl font-bold text-gray-800 mb-2">
@@ -300,14 +316,13 @@ const ColorWheel = () => {
                         {isAdmin && <span className="text-lg text-green-600 font-normal"> - Modo Administrador</span>}
                     </h1>
                     <p className="text-gray-600">
-                        {isPublicMode
-                            ? "¡Gira la ruleta y diviértete! Solo puedes girar, no modificar colores."
+                        {isPublicMode ? "¡Gira la ruleta y diviértete! Solo puedes girar, no modificar colores."
                             : "Agrega colores, gira la ruleta y comparte con tus amigos"}
                     </p>
                     <p className="text-xs text-gray-500">Sala: <code>{roomId}</code></p>
                 </div>
 
-                {/* Campo de nombre (todos) */}
+                {/* Nombre */}
                 <div className="mb-4 max-w-md mx-auto">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Tu nombre (requerido para girar)</label>
                     <input
@@ -319,7 +334,7 @@ const ColorWheel = () => {
                     />
                 </div>
 
-                {/* Botones de compartir - Admin */}
+                {/* Controles admin */}
                 {isAdmin && (
                     <div className="flex flex-wrap justify-center gap-4 mb-6">
                         <button onClick={sharePublicLink} className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
@@ -441,7 +456,10 @@ const ColorWheel = () => {
                                                         <span className="flex-1">{color}</span>
                                                         <input
                                                             type="color"
-                                                            value={customColors[color] || '#3b82f6'}
+                                                            value={
+                                                                customColors[color] ||
+                                                                (COLOR_MAP[color] ?? '#3b82f6') // 👈 usa mapa por defecto
+                                                            }
                                                             onChange={(e) => updateCustomColor(color, e.target.value)}
                                                             className="w-8 h-8 rounded border-2 border-gray-300 cursor-pointer"
                                                             title={`Cambiar color de ${color}`}
@@ -464,7 +482,14 @@ const ColorWheel = () => {
                                 <div className="max-h-48 overflow-y-auto">
                                     {colors.length > 0 ? colors.map((color, i) => (
                                         <div key={i} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded">
-                                            <div className="w-6 h-6 rounded-full border-2 border-gray-300" style={{ backgroundColor: customColors[color] || '#3b82f6' }} />
+                                            <div
+                                                className="w-6 h-6 rounded-full border-2 border-gray-300"
+                                                style={{
+                                                    backgroundColor:
+                                                        customColors[color] ||
+                                                        (COLOR_MAP[color] ?? '#3b82f6') // 👈 usa mapa por defecto
+                                                }}
+                                            />
                                             <span>{color}</span>
                                         </div>
                                     )) : <p className="text-gray-500 text-center py-4">No hay colores disponibles</p>}
@@ -500,7 +525,7 @@ const ColorWheel = () => {
                     ) : (
                         <ol className="text-sm text-blue-700 space-y-1">
                             <li>1. Escribe tu nombre y pulsa <strong>GIRAR</strong>.</li>
-                            <li>2. El color elegido se quita para todos automáticamente.</li>
+                            <li>2. El color elegido parpadea y luego desaparece para todos.</li>
                         </ol>
                     )}
                 </div>

@@ -6,7 +6,7 @@ import {
 } from 'firebase/firestore';
 
 const ColorWheel = () => {
-    const [colors, setColors] = useState(['Rojo', 'Azul', 'Verde', 'Amarillo', 'Naranja', 'Blanco/Morado', 'Negro', 'Rosa']);
+    const [colors, setColors] = useState(['Rojo', 'Azul', 'Verde', 'Amarillo', 'Naranja', 'Morado/Blanco', 'Negro', 'Rosa']);
     const [newColor, setNewColor] = useState('');
     const [customColors, setCustomColors] = useState({});
     const [isSpinning, setIsSpinning] = useState(false);

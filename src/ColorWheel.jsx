@@ -6,7 +6,7 @@ import {
 } from 'firebase/firestore';
 
 const ColorWheel = () => {
-    const [colors, setColors] = useState(['Rojo', 'Azul', 'Verde', 'Amarillo', 'Naranja', 'Morado/Blanco', 'Negro', 'Rosa']);
+    const [colors, setColors] = useState(['Rojo', 'Azul', 'Verde', 'Amarillo', 'Naranja', 'Blanco/Morado', 'Negro', 'Rosa']);
     const [newColor, setNewColor] = useState('');
     const [customColors, setCustomColors] = useState({});
     const [isSpinning, setIsSpinning] = useState(false);
@@ -56,7 +56,7 @@ const ColorWheel = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [roomId, isAdmin]);
 
-    // Helpers de escritura atómica
+    // Helper de escritura atómica
     const txUpdate = (updateFn) =>
         runTransaction(db, async (tx) => {
             const s = await tx.get(roomRef);
@@ -99,34 +99,150 @@ const ColorWheel = () => {
         }));
     };
 
+    // ==============================
+    // GIRO ALINEADO (ajuste 1)
+    // ==============================
     const spinWheel = () => {
         if (colors.length === 0 || isSpinning) return;
 
         setIsSpinning(true);
         setSelectedColor('');
 
-        const spins = 5 + Math.random() * 5;
-        const finalRotation = rotation + (spins * 360) + Math.random() * 360;
+        const seg = 360 / colors.length;
+        const base = ((rotation % 360) + 360) % 360; // rotación actual normalizada
+
+        // Elegimos un índice objetivo al azar y alineamos el giro para que quede centrado bajo la flecha
+        const targetIndex = Math.floor(Math.random() * colors.length);
+        const targetAngle = targetIndex * seg + seg / 2;
+
+        // Queremos que al finalizar, el centro del segmento coincida con la flecha (0°).
+        // Si el círculo rota +R, el ángulo bajo la flecha es (360 - (base + R)).
+        // Por tanto: (360 - (base + delta)) % 360 = targetAngle  =>  delta = (360 - targetAngle - base) % 360
+        const spins = 5 + Math.random() * 5; // vueltas completas para animación “bonita”
+        const alignDelta = (360 - targetAngle - base + 360) % 360;
+        const finalRotation = rotation + spins * 360 + alignDelta;
+
         setRotation(finalRotation);
 
         setTimeout(async () => {
-            const segmentAngle = 360 / colors.length;
-            const normalizedRotation = finalRotation % 360;
-            const adjustedRotation = (normalizedRotation + segmentAngle / 2) % 360;
-            const selectedIndex = Math.floor(adjustedRotation / segmentAngle);
-            const selected = colors[selectedIndex];
+            const selected = colors[targetIndex];
 
-            // Transacción: quita el color y agrega al historial (menos si es el último, lo dejamos)
-            await txUpdate(({ colors, history, customColors }) => {
-                if (!colors.includes(selected)) return { colors, history, customColors }; // ya lo quitó otro
-                const nextColors = colors.length === 1 ? colors : colors.filter(c => c !== selected);
-                const nextHistory = [...history, { color: selected, ts: Date.now() }];
+            // Transacción: quita el color y agrega al historial (si queda 1, lo mantenemos)
+            await txUpdate(({ colors: curr, history, customColors }) => {
+                if (!curr.includes(selected)) return { colors: curr, history, customColors }; // ya lo quitó otro
+                const nextColors = curr.length === 1 ? curr : curr.filter(c => c !== selected);
+                const nextHistory = [...(history || []), { color: selected, ts: Date.now() }];
                 return { colors: nextColors, history: nextHistory, customColors };
             });
 
             setSelectedColor(selected);
             setIsSpinning(false);
-        }, 3000);
+        }, 3000); // misma duración que la transición CSS
+    };
+
+    // ==============================
+    // CÍRCULO COMPLETO CON 1 COLOR (ajuste 2)
+    // ==============================
+    const getWheelSegments = () => {
+        // Caso especial: 1 color => dibujar un círculo completo
+        if (colors.length === 1) {
+            const color = colors[0];
+
+            const colorMap = {
+                'Rojo': '#dc2626', 'Azul': '#2563eb', 'Verde': '#16a34a',
+                'Amarillo': '#eab308', 'Naranja': '#ea580c', 'Morado': '#9333ea', 'Blanco/Morado': '#9333ea',
+                'Rosa': '#ec4899', 'Violeta': '#7c3aed', 'Cyan': '#0891b2',
+                'Negro': '#1f2937', 'Blanco': '#FFFFFF', 'Gris': '#6b7280',
+                'Celeste': '#0ea5e9', 'Turquesa': '#14b8a6', 'Lima': '#84cc16',
+                'Dorado': '#f59e0b', 'Plateado': '#9ca3af', 'Marrón': '#92400e',
+                'Café': '#78350f', 'Beige': '#d6d3d1', 'Coral': '#f97316',
+                'Magenta': '#d946ef', 'Índigo': '#4f46e5', 'Lavanda': '#a78bfa',
+                'Rojo Oscuro': '#991b1b', 'Azul Claro': '#60a5fa', 'Verde Claro': '#4ade80',
+                'Amarillo Claro': '#fde047', 'Rosa Claro': '#f9a8d4', 'Morado Claro': '#c084fc',
+                'Verde Oscuro': '#15803d', 'Azul Oscuro': '#1e40af', 'Naranja Claro': '#fb923c',
+                'Esmeralda': '#10b981', 'Rubí': '#be123c', 'Zafiro': '#1e40af',
+                'Ámbar': '#f59e0b', 'Jade': '#059669', 'Carmesí': '#dc2626'
+            };
+
+            const segmentColor =
+                customColors[color] ||
+                colorMap[color] ||
+                `hsl(0, 70%, 50%)`;
+
+            return (
+                <g key={color}>
+                    <circle cx="150" cy="150" r="140" fill={segmentColor} stroke="#fff" strokeWidth="3" />
+                    <text
+                        x="150" y="150"
+                        textAnchor="middle" dominantBaseline="middle"
+                        fill="white" fontSize="18" fontWeight="bold"
+                        style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}
+                    >
+                        {color}
+                    </text>
+                </g>
+            );
+        }
+
+        // Caso normal: 2+ colores => segmentos
+        const segmentAngle = 360 / Math.max(colors.length, 1);
+
+        return colors.map((color, index) => {
+            const startAngle = index * segmentAngle;
+            const endAngle = (index + 1) * segmentAngle;
+            const largeArcFlag = segmentAngle > 180 ? 1 : 0;
+
+            const x1 = 150 + 140 * Math.cos((startAngle - 90) * Math.PI / 180);
+            const y1 = 150 + 140 * Math.sin((startAngle - 90) * Math.PI / 180);
+            const x2 = 150 + 140 * Math.cos((endAngle - 90) * Math.PI / 180);
+            const y2 = 150 + 140 * Math.sin((endAngle - 90) * Math.PI / 180);
+
+            const pathData = [
+                `M 150 150`,
+                `L ${x1} ${y1}`,
+                `A 140 140 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                'Z'
+            ].join(' ');
+
+            const colorMap = {
+                'Rojo': '#dc2626', 'Azul': '#2563eb', 'Verde': '#16a34a',
+                'Amarillo': '#eab308', 'Naranja': '#ea580c', 'Morado': '#9333ea', 'Blanco/Morado': '#9333ea',
+                'Rosa': '#ec4899', 'Violeta': '#7c3aed', 'Cyan': '#0891b2',
+                'Negro': '#1f2937', 'Blanco': '#FFFFFF', 'Gris': '#6b7280',
+                'Celeste': '#0ea5e9', 'Turquesa': '#14b8a6', 'Lima': '#84cc16',
+                'Dorado': '#f59e0b', 'Plateado': '#9ca3af', 'Marrón': '#92400e',
+                'Café': '#78350f', 'Beige': '#d6d3d1', 'Coral': '#f97316',
+                'Magenta': '#d946ef', 'Índigo': '#4f46e5', 'Lavanda': '#a78bfa',
+                'Rojo Oscuro': '#991b1b', 'Azul Claro': '#60a5fa', 'Verde Claro': '#4ade80',
+                'Amarillo Claro': '#fde047', 'Rosa Claro': '#f9a8d4', 'Morado Claro': '#c084fc',
+                'Verde Oscuro': '#15803d', 'Azul Oscuro': '#1e40af', 'Naranja Claro': '#fb923c',
+                'Esmeralda': '#10b981', 'Rubí': '#be123c', 'Zafiro': '#1e40af',
+                'Ámbar': '#f59e0b', 'Jade': '#059669', 'Carmesí': '#dc2626'
+            };
+
+            const segmentColor =
+                customColors[color] ||
+                colorMap[color] ||
+                `hsl(${index * 360 / Math.max(colors.length, 1)}, 70%, 50%)`;
+
+            return (
+                <g key={color}>
+                    <path d={pathData} fill={segmentColor} stroke="#fff" strokeWidth="3" />
+                    <text
+                        x={150 + 80 * Math.cos((startAngle + segmentAngle / 2 - 90) * Math.PI / 180)}
+                        y={150 + 80 * Math.sin((startAngle + segmentAngle / 2 - 90) * Math.PI / 180)}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fill="white"
+                        fontSize="11"
+                        fontWeight="bold"
+                        style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}
+                    >
+                        {color}
+                    </text>
+                </g>
+            );
+        });
     };
 
     const resetGame = async () => {
@@ -151,65 +267,6 @@ const ColorWheel = () => {
         const url = `${base}?room=${roomId}`;
         navigator.clipboard.writeText(url).catch(() => { });
         alert('¡Link admin copiado! ' + url);
-    };
-
-    const getWheelSegments = () => {
-        const segmentAngle = 360 / Math.max(colors.length, 1);
-        return colors.map((color, index) => {
-            const startAngle = index * segmentAngle;
-            const endAngle = (index + 1) * segmentAngle;
-            const largeArcFlag = segmentAngle > 180 ? 1 : 0;
-
-            const x1 = 150 + 140 * Math.cos((startAngle - 90) * Math.PI / 180);
-            const y1 = 150 + 140 * Math.sin((startAngle - 90) * Math.PI / 180);
-            const x2 = 150 + 140 * Math.cos((endAngle - 90) * Math.PI / 180);
-            const y2 = 150 + 140 * Math.sin((endAngle - 90) * Math.PI / 180);
-
-            const pathData = [
-                `M 150 150`,
-                `L ${x1} ${y1}`,
-                `A 140 140 0 ${largeArcFlag} 1 ${x2} ${y2}`,
-                'Z'
-            ].join(' ');
-
-            const colorMap = {
-                'Rojo': '#dc2626', 'Azul': '#2563eb', 'Verde': '#16a34a',
-                'Amarillo': '#eab308', 'Naranja': '#ea580c', 'Morado': '#9333ea',
-                'Rosa': '#ec4899', 'Violeta': '#7c3aed', 'Cyan': '#0891b2',
-                'Negro': '#1f2937', 'Blanco': '#FFFFFF', 'Gris': '#6b7280',
-                'Celeste': '#0ea5e9', 'Turquesa': '#14b8a6', 'Lima': '#84cc16',
-                'Dorado': '#f59e0b', 'Plateado': '#9ca3af', 'Marrón': '#92400e',
-                'Café': '#78350f', 'Beige': '#d6d3d1', 'Coral': '#f97316',
-                'Magenta': '#d946ef', 'Índigo': '#4f46e5', 'Lavanda': '#a78bfa',
-                'Rojo Oscuro': '#991b1b', 'Azul Claro': '#60a5fa', 'Verde Claro': '#4ade80',
-                'Amarillo Claro': '#fde047', 'Rosa Claro': '#f9a8d4', 'Morado Claro': '#c084fc',
-                'Verde Oscuro': '#15803d', 'Azul Oscuro': '#1e40af', 'Naranja Claro': '#fb923c',
-                'Esmeralda': '#10b981', 'Rubí': '#be123c', 'Zafiro': '#1e40af',
-                'Ámbar': '#f59e0b', 'Jade': '#059669', 'Carmesí': '#dc2626'
-            };
-
-            const segmentColor = customColors[color] ||
-                colorMap[color] ||
-                `hsl(${index * 360 / Math.max(colors.length, 1)}, 70%, 50%)`;
-
-            return (
-                <g key={color}>
-                    <path d={pathData} fill={segmentColor} stroke="#fff" strokeWidth="3" />
-                    <text
-                        x={150 + 80 * Math.cos((startAngle + segmentAngle / 2 - 90) * Math.PI / 180)}
-                        y={150 + 80 * Math.sin((startAngle + segmentAngle / 2 - 90) * Math.PI / 180)}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        fill="white"
-                        fontSize="11"
-                        fontWeight="bold"
-                        style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}
-                    >
-                        {color}
-                    </text>
-                </g>
-            );
-        });
     };
 
     return (
@@ -291,8 +348,16 @@ const ColorWheel = () => {
                                         : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 hover:scale-105 active:scale-95'
                                 }`}
                         >
-                            {isSpinning ? <RotateCw className="animate-spin mx-auto" size={24} /> :
-                                colors.length === 1 ? <div className="text-center"><div>🏆</div><div className="text-xs">FINAL</div></div> : 'GIRAR'}
+                            {isSpinning ? (
+                                <RotateCw className="animate-spin mx-auto" size={24} />
+                            ) : colors.length === 1 ? (
+                                <div className="text-center">
+                                    <div>🏆</div>
+                                    <div className="text-xs">FINAL</div>
+                                </div>
+                            ) : (
+                                'GIRAR'
+                            )}
                         </button>
 
                         {selectedColor && (

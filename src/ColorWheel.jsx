@@ -13,7 +13,11 @@ const ColorWheel = () => {
     const [selectedColor, setSelectedColor] = useState('');
     const [history, setHistory] = useState([]);
     const [rotation, setRotation] = useState(0);
+    const [playerName, setPlayerName] = useState(''); // 👈 nombre del jugador
     const wheelRef = useRef(null);
+
+    // Calibración opcional del puntero (0° = arriba). Cambia si ves leve desajuste visual.
+    const POINTER_ZERO_DEG = 0;
 
     // Modo admin / invitado y sala
     const params = new URLSearchParams(window.location.search);
@@ -22,6 +26,15 @@ const ColorWheel = () => {
     const roomId = params.get('room') || 'default'; // usa 'default' si no envían room
 
     const roomRef = doc(db, 'rooms', roomId);
+
+    // Cargar/guardar nombre localmente
+    useEffect(() => {
+        const saved = localStorage.getItem('wheelPlayerName') || '';
+        setPlayerName(saved);
+    }, []);
+    useEffect(() => {
+        localStorage.setItem('wheelPlayerName', playerName || '');
+    }, [playerName]);
 
     // Suscripción en tiempo real al documento de la sala
     useEffect(() => {
@@ -100,9 +113,16 @@ const ColorWheel = () => {
     };
 
     // ==============================
-    // GIRO ALINEADO (ajuste 1)
+    // GIRO ALINEADO (puntero y resultado coinciden)
     // ==============================
     const spinWheel = () => {
+        // Validar nombre antes de girar
+        const who = (playerName || '').trim();
+        if (!who) {
+            alert('Por favor, escribe tu nombre antes de girar.');
+            return;
+        }
+
         if (colors.length === 0 || isSpinning) return;
 
         setIsSpinning(true);
@@ -115,11 +135,9 @@ const ColorWheel = () => {
         const targetIndex = Math.floor(Math.random() * colors.length);
         const targetAngle = targetIndex * seg + seg / 2;
 
-        // Queremos que al finalizar, el centro del segmento coincida con la flecha (0°).
-        // Si el círculo rota +R, el ángulo bajo la flecha es (360 - (base + R)).
-        // Por tanto: (360 - (base + delta)) % 360 = targetAngle  =>  delta = (360 - targetAngle - base) % 360
-        const spins = 5 + Math.random() * 5; // vueltas completas para animación “bonita”
-        const alignDelta = (360 - targetAngle - base + 360) % 360;
+        // delta para que el centro del segmento quede exactamente bajo el puntero
+        const spins = 5 + Math.random() * 5;
+        const alignDelta = (POINTER_ZERO_DEG - targetAngle - base + 360) % 360;
         const finalRotation = rotation + spins * 360 + alignDelta;
 
         setRotation(finalRotation);
@@ -127,11 +145,11 @@ const ColorWheel = () => {
         setTimeout(async () => {
             const selected = colors[targetIndex];
 
-            // Transacción: quita el color y agrega al historial (si queda 1, lo mantenemos)
+            // Transacción: quita el color y agrega al historial con el jugador
             await txUpdate(({ colors: curr, history, customColors }) => {
                 if (!curr.includes(selected)) return { colors: curr, history, customColors }; // ya lo quitó otro
                 const nextColors = curr.length === 1 ? curr : curr.filter(c => c !== selected);
-                const nextHistory = [...(history || []), { color: selected, ts: Date.now() }];
+                const nextHistory = [...(history || []), { color: selected, ts: Date.now(), by: who }];
                 return { colors: nextColors, history: nextHistory, customColors };
             });
 
@@ -141,7 +159,7 @@ const ColorWheel = () => {
     };
 
     // ==============================
-    // CÍRCULO COMPLETO CON 1 COLOR (ajuste 2)
+    // CÍRCULO COMPLETO CON 1 COLOR
     // ==============================
     const getWheelSegments = () => {
         // Caso especial: 1 color => dibujar un círculo completo
@@ -269,6 +287,9 @@ const ColorWheel = () => {
         alert('¡Link admin copiado! ' + url);
     };
 
+    // Puede girar si: hay colores, no está girando y hay nombre
+    const canSpin = colors.length > 0 && !isSpinning && (playerName || '').trim().length > 0;
+
     return (
         <div className="max-w-4xl mx-auto p-6 bg-gradient-to-br from-purple-50 to-blue-50 min-h-screen">
             <div className="bg-white rounded-lg shadow-xl p-6">
@@ -284,6 +305,18 @@ const ColorWheel = () => {
                             : "Agrega colores, gira la ruleta y comparte con tus amigos"}
                     </p>
                     <p className="text-xs text-gray-500">Sala: <code>{roomId}</code></p>
+                </div>
+
+                {/* Campo de nombre (todos) */}
+                <div className="mb-4 max-w-md mx-auto">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tu nombre (requerido para girar)</label>
+                    <input
+                        type="text"
+                        value={playerName}
+                        onChange={(e) => setPlayerName(e.target.value)}
+                        placeholder="Escribe tu nombre..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
                 </div>
 
                 {/* Botones de compartir - Admin */}
@@ -340,13 +373,14 @@ const ColorWheel = () => {
 
                         <button
                             onClick={spinWheel}
-                            disabled={colors.length === 0 || isSpinning}
-                            className={`w-32 h-32 rounded-full text-white font-bold text-lg shadow-lg transform transition-all ${colors.length === 0 || isSpinning
+                            disabled={!canSpin}
+                            className={`w-32 h-32 rounded-full text-white font-bold text-lg shadow-lg transform transition-all ${!canSpin
                                     ? 'bg-gray-400 cursor-not-allowed'
                                     : colors.length === 1
                                         ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 hover:scale-105 active:scale-95'
                                         : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 hover:scale-105 active:scale-95'
                                 }`}
+                            title={!canSpin ? 'Escribe tu nombre para poder girar' : 'Girar la ruleta'}
                         >
                             {isSpinning ? (
                                 <RotateCw className="animate-spin mx-auto" size={24} />
@@ -367,6 +401,9 @@ const ColorWheel = () => {
                                     {colors.length === 1 ? '🏆 ¡COLOR GANADOR FINAL!' : '¡Resultado!'}
                                 </h3>
                                 <p className={`text-2xl font-bold ${colors.length === 1 ? 'text-yellow-900' : 'text-green-900'}`}>{selectedColor}</p>
+                                <p className="text-sm text-gray-600 mt-1">
+                                    Sacado por: <span className="font-semibold">{(playerName || '').trim()}</span>
+                                </p>
                             </div>
                         )}
                     </div>
@@ -442,6 +479,7 @@ const ColorWheel = () => {
                                     <div key={i} className="bg-blue-50 px-3 py-2 rounded text-sm">
                                         <span className="font-medium">{entry.color}</span>
                                         <span className="text-gray-500 ml-2">{new Date(entry.ts).toLocaleTimeString()}</span>
+                                        {entry.by && <span className="text-gray-600 ml-2">por <strong>{entry.by}</strong></span>}
                                     </div>
                                 )) : <p className="text-gray-500 text-center py-4">Aún no hay selecciones</p>}
                             </div>
@@ -461,7 +499,7 @@ const ColorWheel = () => {
                         </ol>
                     ) : (
                         <ol className="text-sm text-blue-700 space-y-1">
-                            <li>1. Pulsa <strong>GIRAR</strong> y espera el resultado.</li>
+                            <li>1. Escribe tu nombre y pulsa <strong>GIRAR</strong>.</li>
                             <li>2. El color elegido se quita para todos automáticamente.</li>
                         </ol>
                     )}

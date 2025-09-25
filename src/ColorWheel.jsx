@@ -9,7 +9,7 @@ import {
 const COLOR_MAP = {
     'Rojo': '#dc2626', 'Azul': '#2563eb', 'Verde': '#16a34a',
     'Amarillo': '#eab308', 'Naranja': '#ea580c', 'Morado': '#9333ea',
-    'Blanco/Morado': '#9333ea', // 👈 este es el que nos importa
+    'Blanco/Morado': '#9333ea', // por defecto morado para esta opción
     'Rosa': '#ec4899', 'Violeta': '#7c3aed', 'Cyan': '#0891b2',
     'Negro': '#1f2937', 'Blanco': '#FFFFFF', 'Gris': '#6b7280',
     'Celeste': '#0ea5e9', 'Turquesa': '#14b8a6', 'Lima': '#84cc16',
@@ -35,7 +35,7 @@ const ColorWheel = () => {
     const [flash, setFlash] = useState(null); // { color, ts, duration }
     const wheelRef = useRef(null);
 
-    // 0° = arriba. Ajusta ±1..3° si notas micro-desfase visual
+    // 0° = arriba. Ajusta ±1..3° si notaras micro-desfase visual.
     const POINTER_ZERO_DEG = 0;
 
     // Modo / sala
@@ -125,11 +125,28 @@ const ColorWheel = () => {
         }));
     };
 
+    // === Derivados para habilitar/bloquear giro ===
+    const playerOk = (playerName || '').trim().length > 0;
+
+    // Si queda 1 color y ya está en el historial, el juego terminó.
+    const lastColorAlreadyChosen =
+        colors.length === 1 && history?.some(h => h.color === colors[0]);
+
+    const gameFinished = lastColorAlreadyChosen;
+
+    const canSpin = colors.length > 0 && !isSpinning && playerOk && !gameFinished;
+
     // Giro: aleatorio + ganador por redondeo al centro
     const spinWheel = () => {
         const who = (playerName || '').trim();
         if (!who) { alert('Por favor, escribe tu nombre antes de girar.'); return; }
         if (colors.length === 0 || isSpinning) return;
+
+        // guard extra: no permitir giros cuando ya finalizó
+        if (colors.length === 1 && history?.some(h => h.color === colors[0])) {
+            alert('El juego ya terminó 🎉 No hay colores nuevos por sacar.');
+            return;
+        }
 
         setIsSpinning(true);
         setSelectedColor('');
@@ -172,7 +189,7 @@ const ColorWheel = () => {
             setSelectedColor(selected);
             setIsSpinning(false);
 
-            // 2) quitar color luego de parpadear
+            // 2) quitar color luego de parpadear (excepto el último)
             setTimeout(async () => {
                 await txUpdate(({ colors: curr, history, customColors, flash }) => {
                     const sameFlash = flash && flash.color === selected;
@@ -275,6 +292,8 @@ const ColorWheel = () => {
             const all = [...new Set([...colors, ...history.map(h => h.color)])];
             return { colors: all, history: [], customColors, flash: null };
         });
+        setSelectedColor('');
+        setRotation(0);
     };
 
     const sharePublicLink = () => {
@@ -290,8 +309,6 @@ const ColorWheel = () => {
         navigator.clipboard.writeText(url).catch(() => { });
         alert('¡Link admin copiado! ' + url);
     };
-
-    const canSpin = colors.length > 0 && !isSpinning && (playerName || '').trim().length > 0;
 
     return (
         <div className="max-w-4xl mx-auto p-6 bg-gradient-to-br from-purple-50 to-blue-50 min-h-screen">
@@ -395,10 +412,21 @@ const ColorWheel = () => {
                                         ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 hover:scale-105 active:scale-95'
                                         : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 hover:scale-105 active:scale-95'
                                 }`}
-                            title={!canSpin ? 'Escribe tu nombre para poder girar' : 'Girar la ruleta'}
+                            title={
+                                !playerOk
+                                    ? 'Escribe tu nombre para poder girar'
+                                    : gameFinished
+                                        ? 'Juego finalizado'
+                                        : 'Girar la ruleta'
+                            }
                         >
                             {isSpinning ? (
                                 <RotateCw className="animate-spin mx-auto" size={24} />
+                            ) : gameFinished ? (
+                                <div className="text-center">
+                                    <div>🏁</div>
+                                    <div className="text-xs">FINALIZADO</div>
+                                </div>
                             ) : colors.length === 1 ? (
                                 <div className="text-center">
                                     <div>🏆</div>
@@ -409,11 +437,17 @@ const ColorWheel = () => {
                             )}
                         </button>
 
+                        {gameFinished && (
+                            <div className="mt-3 text-sm text-yellow-700 bg-yellow-100 border border-yellow-200 rounded p-2">
+                                🎉 Juego finalizado: ya se han extraído todos los colores.
+                            </div>
+                        )}
+
                         {selectedColor && (
                             <div className={`mt-4 p-4 border rounded-lg ${colors.length === 1 ? 'bg-gradient-to-r from-yellow-100 to-orange-100 border-yellow-300' : 'bg-green-100 border-green-300'
                                 }`}>
                                 <h3 className={`text-lg font-bold ${colors.length === 1 ? 'text-yellow-800' : 'text-green-800'}`}>
-                                    {colors.length === 1 ? '🏆 ¡COLOR GANADOR FINAL!' : '¡Resultado!'}
+                                    {colors.length === 1 ? '🏆 ¡COLOR FINAL!' : '¡Resultado!'}
                                 </h3>
                                 <p className={`text-2xl font-bold ${colors.length === 1 ? 'text-yellow-900' : 'text-green-900'}`}>{selectedColor}</p>
                                 <p className="text-sm text-gray-600 mt-1">
@@ -458,7 +492,7 @@ const ColorWheel = () => {
                                                             type="color"
                                                             value={
                                                                 customColors[color] ||
-                                                                (COLOR_MAP[color] ?? '#3b82f6') // 👈 usa mapa por defecto
+                                                                (COLOR_MAP[color] ?? '#3b82f6')
                                                             }
                                                             onChange={(e) => updateCustomColor(color, e.target.value)}
                                                             className="w-8 h-8 rounded border-2 border-gray-300 cursor-pointer"
@@ -487,7 +521,7 @@ const ColorWheel = () => {
                                                 style={{
                                                     backgroundColor:
                                                         customColors[color] ||
-                                                        (COLOR_MAP[color] ?? '#3b82f6') // 👈 usa mapa por defecto
+                                                        (COLOR_MAP[color] ?? '#3b82f6')
                                                 }}
                                             />
                                             <span>{color}</span>
@@ -499,7 +533,7 @@ const ColorWheel = () => {
 
                         <div>
                             <h3 className="text-lg font-semibold mb-3">Historial ({history.length})</h3>
-                            <div className="max-h-48 overflow-y-auto">
+                            <div className="max-h-80 md:max-h-[28rem] overflow-y-auto pr-2">
                                 {history.length > 0 ? history.slice().reverse().map((entry, i) => (
                                     <div key={i} className="bg-blue-50 px-3 py-2 rounded text-sm">
                                         <span className="font-medium">{entry.color}</span>

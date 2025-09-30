@@ -2,6 +2,8 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
+import { getAuth, signInAnonymously } from "firebase/auth";
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -20,4 +22,13 @@ const firebaseConfig = {
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
-export const analytics = getAnalytics(app);
+
+// Inicia sesión anónima para cumplir las reglas (request.auth != null)
+const auth = getAuth(app);
+signInAnonymously(auth).catch((err) => {
+    console.error('Anonymous sign-in failed:', err);
+});
+
+// Analytics opcional (evita errores en SSR)
+export const analytics =
+    typeof window !== 'undefined' ? getAnalytics(app) : null;

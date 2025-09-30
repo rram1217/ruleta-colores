@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Trash2, Plus, RotateCw, Share2, RefreshCw } from 'lucide-react';
 import { db } from './firebase';
 import {
-    doc, onSnapshot, runTransaction, setDoc, serverTimestamp
+    doc, onSnapshot, runTransaction, setDoc, serverTimestamp,
+    collection, getDocs, query, where, limit
 } from 'firebase/firestore';
 
 /** Mapa de colores reutilizable para toda la UI */
@@ -34,6 +35,7 @@ const ColorWheel = () => {
     const [playerName, setPlayerName] = useState('');
     const [flash, setFlash] = useState(null); // { color, ts, duration }
     const wheelRef = useRef(null);
+    const [roomCode, setRoomCode] = useState('');
 
     // 0° = arriba. Ajusta ±1..3° si notaras micro-desfase visual.
     const POINTER_ZERO_DEG = 0;
@@ -72,10 +74,51 @@ const ColorWheel = () => {
                 setCustomColors(d.customColors || {});
                 setHistory(d.history || []);
                 setFlash(d.flash || null);
+                setRoomCode(d.code || ''); // ← NUEVO
             } else {
                 initIfNeeded();
             }
         });
+
+        const ensureRoomCode = async () => {
+            if (!isAdmin) return;
+            if (roomCode) return; // ya hay code
+
+            // intenta encontrar un code existente en la colección codes (caso salas creadas con el lobby)
+            const qSnap = await getDocs(
+                query(collection(db, 'codes'), where('roomId', '==', roomId), limit(1))
+            );
+            let codeFound = qSnap.empty ? '' : qSnap.docs[0].id;
+
+            if (!codeFound) {
+                // generar uno nuevo y reservarlo
+                const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                const genCode = (len = 6) =>
+                    Array.from({ length: len }, () => ALPHABET[Math.floor(Math.random() * ALPHABET.length)]).join('');
+
+                await runTransaction(db, async (tx) => {
+                    for (let i = 0; i < 5; i++) {
+                        const tryCode = genCode(6);
+                        const codeRef = doc(db, 'codes', tryCode);
+                        const snap = await tx.get(codeRef);
+                        if (!snap.exists()) {
+                            codeFound = tryCode;
+                            tx.set(codeRef, { roomId, createdAt: serverTimestamp() });
+                            return;
+                        }
+                    }
+                    throw new Error('No se pudo generar un código único.');
+                });
+            }
+
+            // guarda el code en la sala y en estado
+            await setDoc(roomRef, { code: codeFound }, { merge: true });
+            setRoomCode(codeFound);
+        };
+
+        // Llamada (no bloqueante)
+        ensureRoomCode().catch(console.error);
+
         return () => unsub();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [roomId, isAdmin]);
@@ -338,6 +381,27 @@ const ColorWheel = () => {
                     </p>
                     <p className="text-xs text-gray-500">Sala: <code>{roomId}</code></p>
                 </div>
+
+                {isAdmin && roomCode && (
+                    <div className="mt-3 inline-flex items-center gap-2 bg-purple-50 border border-purple-200 text-purple-800 px-3 py-1.5 rounded-lg">
+                        <span className="text-sm">Código de sala:</span>
+                        <code className="font-semibold tracking-widest">{roomCode}</code>
+                        <button
+                            onClick={async () => {
+                                try {
+                                    await navigator.clipboard.writeText(roomCode);
+                                    alert(`Código copiado: ${roomCode}`);
+                                } catch {
+                                    alert(`Código: ${roomCode}`);
+                                }
+                            }}
+                            className="ml-2 text-xs bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded"
+                            title="Copiar código"
+                        >
+                            Copiar
+                        </button>
+                    </div>
+                )}
 
                 {/* Nombre */}
                 <div className="mb-4 max-w-md mx-auto">

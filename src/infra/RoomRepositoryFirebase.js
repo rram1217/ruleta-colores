@@ -126,7 +126,7 @@ export function roomRepository(roomId) {
         return codeFound;
     };
 
-    const createRoom = async ({ initialColors = [], customColors = {} } = {}) => {
+    const createRoom = async ({ initialColors = [], customColors = {}, createdBy = "" } = {}) => {
         // 1) Generar roomId sencillo (fecha+random) – o usa pushId/uuid si prefieres
         const newRoomId = `r${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
         const newRoomRef = doc(db, 'rooms', newRoomId);
@@ -136,7 +136,8 @@ export function roomRepository(roomId) {
             colors: initialColors,
             customColors,
             history: [],
-            updatedAt: serverTimestamp()
+            updatedAt: serverTimestamp(),
+            createdBy: createdBy
         }, { merge: true });
 
         // 3) Generar/Reservar código único en 'codes'

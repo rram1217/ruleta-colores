@@ -3,12 +3,40 @@
   "WorkspaceRootPath": "C:\\repos\\ruleta-colores\\ruleta-colores\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\repos\\ruleta-colores\\ruleta-colores\\src\\Home.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\Home.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\repos\\ruleta-colores\\ruleta-colores\\src\\ui\\pages\\RoomPage.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\ui\\pages\\RoomPage.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\repos\\ruleta-colores\\ruleta-colores\\src\\ui\\components\\HistoryList.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\ui\\components\\HistoryList.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\repos\\ruleta-colores\\ruleta-colores\\src\\ui\\components\\AdminControls.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\ui\\components\\AdminControls.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\repos\\ruleta-colores\\ruleta-colores\\src\\ui\\components\\Wheel.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\ui\\components\\Wheel.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\repos\\ruleta-colores\\ruleta-colores\\src\\infra\\RoomRepositoryFirebase.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\infra\\RoomRepositoryFirebase.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\repos\\ruleta-colores\\ruleta-colores\\src\\domain\\services\\winner.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\domain\\services\\winner.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\repos\\ruleta-colores\\ruleta-colores\\src\\constants\\colorMap.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\constants\\colorMap.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\repos\\ruleta-colores\\ruleta-colores\\src\\ColorWheel.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\ColorWheel.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\repos\\ruleta-colores\\ruleta-colores\\src\\Home.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\Home.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\repos\\ruleta-colores\\ruleta-colores\\src\\firebase.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
@@ -30,11 +58,102 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "RoomPage.jsx",
+              "DocumentMoniker": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\ui\\pages\\RoomPage.jsx",
+              "RelativeDocumentMoniker": "src\\ui\\pages\\RoomPage.jsx",
+              "ToolTip": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\ui\\pages\\RoomPage.jsx",
+              "RelativeToolTip": "src\\ui\\pages\\RoomPage.jsx",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEwBAAAZAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003663|",
+              "WhenOpened": "2025-10-02T03:14:44.902Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "HistoryList.jsx",
+              "DocumentMoniker": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\ui\\components\\HistoryList.jsx",
+              "RelativeDocumentMoniker": "src\\ui\\components\\HistoryList.jsx",
+              "ToolTip": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\ui\\components\\HistoryList.jsx",
+              "RelativeToolTip": "src\\ui\\components\\HistoryList.jsx",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003663|",
+              "WhenOpened": "2025-10-02T03:10:57.383Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "AdminControls.jsx",
+              "DocumentMoniker": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\ui\\components\\AdminControls.jsx",
+              "RelativeDocumentMoniker": "src\\ui\\components\\AdminControls.jsx",
+              "ToolTip": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\ui\\components\\AdminControls.jsx",
+              "RelativeToolTip": "src\\ui\\components\\AdminControls.jsx",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003663|",
+              "WhenOpened": "2025-10-02T03:10:32.239Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 3,
+              "Title": "Wheel.jsx",
+              "DocumentMoniker": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\ui\\components\\Wheel.jsx",
+              "RelativeDocumentMoniker": "src\\ui\\components\\Wheel.jsx",
+              "ToolTip": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\ui\\components\\Wheel.jsx",
+              "RelativeToolTip": "src\\ui\\components\\Wheel.jsx",
+              "ViewState": "AgIAACwAAAAAAAAAAAAcwFMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003663|",
+              "WhenOpened": "2025-10-02T03:09:33.518Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "RoomRepositoryFirebase.js",
+              "DocumentMoniker": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\infra\\RoomRepositoryFirebase.js",
+              "RelativeDocumentMoniker": "src\\infra\\RoomRepositoryFirebase.js",
+              "ToolTip": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\infra\\RoomRepositoryFirebase.js",
+              "RelativeToolTip": "src\\infra\\RoomRepositoryFirebase.js",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-10-02T03:07:55.718Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "winner.js",
+              "DocumentMoniker": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\domain\\services\\winner.js",
+              "RelativeDocumentMoniker": "src\\domain\\services\\winner.js",
+              "ToolTip": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\domain\\services\\winner.js",
+              "RelativeToolTip": "src\\domain\\services\\winner.js",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-10-02T03:07:01.486Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "colorMap.js",
+              "DocumentMoniker": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\constants\\colorMap.js",
+              "RelativeDocumentMoniker": "src\\constants\\colorMap.js",
+              "ToolTip": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\constants\\colorMap.js",
+              "RelativeToolTip": "src\\constants\\colorMap.js",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-10-02T03:06:11.462Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
               "Title": "main.jsx",
               "DocumentMoniker": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\main.jsx",
               "RelativeDocumentMoniker": "src\\main.jsx",
@@ -42,24 +161,25 @@
               "RelativeToolTip": "src\\main.jsx",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003663|",
-              "WhenOpened": "2025-09-25T23:55:26.73Z"
+              "WhenOpened": "2025-09-25T23:55:26.73Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 8,
               "Title": "Home.jsx",
               "DocumentMoniker": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\Home.jsx",
               "RelativeDocumentMoniker": "src\\Home.jsx",
               "ToolTip": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\Home.jsx",
               "RelativeToolTip": "src\\Home.jsx",
-              "ViewState": "AgIAABcAAAAAAAAAAAAowCsAAAAdAAAAAAAAAA==",
+              "ViewState": "AgIAACYAAAAAAAAAAAAowD4AAAAnAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003663|",
               "WhenOpened": "2025-09-25T23:48:21.959Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 11,
               "Title": "App.jsx",
               "DocumentMoniker": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\App.jsx",
               "RelativeDocumentMoniker": "src\\App.jsx",
@@ -67,11 +187,12 @@
               "RelativeToolTip": "src\\App.jsx",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003663|",
-              "WhenOpened": "2025-09-25T23:47:24.769Z"
+              "WhenOpened": "2025-09-25T23:47:24.769Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 9,
               "Title": "firebase.js",
               "DocumentMoniker": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\firebase.js",
               "RelativeDocumentMoniker": "src\\firebase.js",
@@ -79,19 +200,21 @@
               "RelativeToolTip": "src\\firebase.js",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAACAAAAAWAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2025-09-25T06:09:25.963Z"
+              "WhenOpened": "2025-09-25T06:09:25.963Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 7,
               "Title": "ColorWheel.jsx",
               "DocumentMoniker": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\ColorWheel.jsx",
               "RelativeDocumentMoniker": "src\\ColorWheel.jsx",
               "ToolTip": "C:\\repos\\ruleta-colores\\ruleta-colores\\src\\ColorWheel.jsx",
               "RelativeToolTip": "src\\ColorWheel.jsx",
-              "ViewState": "AgIAAAwAAAAAAAAAAAAAACUAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAFQCAAAAAAAAAAAcwHsCAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003663|",
-              "WhenOpened": "2025-09-25T06:01:38.334Z"
+              "WhenOpened": "2025-09-25T06:01:38.334Z",
+              "EditorCaption": ""
             }
           ]
         }

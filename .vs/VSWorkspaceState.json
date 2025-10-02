@@ -2,8 +2,12 @@
   "ExpandedNodes": [
     "",
     "\\public",
-    "\\src"
+    "\\src",
+    "\\src\\domain\\services",
+    "\\src\\infra",
+    "\\src\\ui",
+    "\\src\\ui\\pages"
   ],
-  "SelectedNode": "\\src\\firebase.js",
+  "SelectedNode": "\\src\\ui\\pages\\RoomPage.jsx",
   "PreviewInSolutionExplorer": false
 }
